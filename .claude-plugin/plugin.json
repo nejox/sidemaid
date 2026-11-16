@@ -1,0 +1,56 @@
+{
+  "name": "mermaid-pane",
+  "version": "0.1.0",
+  "description": "Mermaid diagrams from the conversation, rendered as images in a terminal side pane",
+  "author": { "name": "nejox", "url": "https://github.com/nejox" },
+  "homepage": "https://github.com/nejox/mermaid-pane",
+  "repository": "https://github.com/nejox/mermaid-pane",
+  "license": "MIT",
+  "keywords": ["mermaid", "diagram", "pane", "terminal", "mod"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "theme": {
+      "type": "string",
+      "title": "Diagram theme",
+      "description": "The mermaid theme the diagrams are rendered in.",
+      "default": "dark",
+      "options": ["dark", "default", "neutral", "forest"]
+    },
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open the pane on a new diagram",
+      "description": "Open the pane beside the transcript when Claude writes a diagram (only where the terminal docks panes).",
+      "default": true
+    },
+    "collapseInTranscript": {
+      "type": "boolean",
+      "title": "Collapse diagrams in the transcript",
+      "description": "Draw a one-line pointer to the pane in place of each mermaid block. The conversation keeps the source either way.",
+      "default": true
+    },
+    "promptHint": {
+      "type": "boolean",
+      "title": "Tell Claude about the pane",
+      "description": "Adds a short note to the system prompt: diagrams show in a narrow pane, so prefer top-down layouts and a title.",
+      "default": true
+    },
+    "saveDir": {
+      "type": "string",
+      "title": "Save folder",
+      "description": "Where the pane's save key writes .mmd and .png, relative to the session's working directory.",
+      "default": "docs/diagrams"
+    },
+    "mmdcPath": {
+      "type": "string",
+      "title": "mmdc command",
+      "description": "The mermaid-cli executable: a name on PATH or an absolute path.",
+      "default": "mmdc"
+    },
+    "chromePath": {
+      "type": "string",
+      "title": "Chrome path",
+      "description": "The browser mmdc renders with. Empty: an installed Chrome or Chromium if one is found, else puppeteer's own.",
+      "default": ""
+    }
+  }
+}
