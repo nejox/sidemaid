@@ -8,6 +8,8 @@ const TITLE = 'Mermaid'
 const KEEP = 30
 // An Image takes at most 2 MiB of PNG: about this much base64.
 const MAX_BASE64 = 2_796_000
+// And at most 4096 pixels a side.
+const MAX_SIDE = 4096
 
 // Change the tag when a diagram's fields change: it declines what an earlier
 // version stored, which outlives a reload.
@@ -162,7 +164,7 @@ async function rendererOf($: EngineInterface, settings: Settings): Promise<Rende
   const home = (await $.env.get('HOME')) ?? '/tmp'
   const cacheDir = `${(await $.env.get('XDG_CACHE_HOME')) ?? `${home}/.cache`}/sidemaid`
   const mmdc = settings.mmdcPath
-  const flags = ['-t', settings.theme, '-b', 'transparent', '-s', '2', '-q']
+  const flags = ['-t', settings.theme, '-b', 'transparent', '-q']
 
   let chrome = settings.chromePath
   if (chrome === '' && (await $.env.get('PUPPETEER_EXECUTABLE_PATH')) === undefined) {
@@ -183,8 +185,6 @@ async function rendererOf($: EngineInterface, settings: Settings): Promise<Rende
 
 // One per load: a reload runs register again in a fresh environment.
 let renderer: Promise<Renderer> | undefined
-// The terminal's columns, as the last drawing measured them.
-let screenColumns = 80
 let isHinted = false
 let lastGeometry = ''
 
@@ -208,13 +208,17 @@ async function renderOne($: EngineInterface, settings: Settings, diagram: Diagra
     const png = `${base}.png`
     if (!(await $.fs.exists(png))) {
       await $.fs.write(`${base}.mmd`, diagram.source)
-      const argv = [setup.mmdc, '-i', `${base}.mmd`, '-o', png, ...setup.flags]
-      const ran = await $.process.run(argv, {
-        timeoutMs: 60_000,
-      })
-      if (ran.exitCode !== 0) {
-        await finish($, diagram.id, { status: 'error', error: errorOf(ran.stderr) })
-        return
+      // Twice the scale draws sharp; a diagram that would pass an Image's limit gets once.
+      for (const scale of ['2', '1']) {
+        const argv = [setup.mmdc, '-i', `${base}.mmd`, '-o', png, '-s', scale, ...setup.flags]
+        const ran = await $.process.run(argv, { timeoutMs: 60_000 })
+        if (ran.exitCode !== 0) {
+          await finish($, diagram.id, { status: 'error', error: errorOf(ran.stderr) })
+          return
+        }
+        const { base64 } = await $.fs.read(png, { as: 'bytes' })
+        const { width, height } = pngSize(base64)
+        if (Math.max(width, height) <= MAX_SIDE) break
       }
     }
     const { base64 } = await $.fs.read(png, { as: 'bytes' })
@@ -256,9 +260,8 @@ async function capture($: EngineInterface, settings: Settings, sources: readonly
 
 // The pane opens by itself only where the terminal docks it wide enough; else say where it is.
 async function announce($: EngineInterface, settings: Settings, added: readonly Diagram[]) {
-  // Below 110 columns no pane docks: one opened unasked would only wait.
-  const canDock = screenColumns >= 110
-  const opened = settings.autoOpen && canDock ? await $.ui.open({ id: PANE, title: TITLE }) : undefined
+  // Opened unasked, a pane waits undrawn where the terminal is too narrow to dock it.
+  const opened = settings.autoOpen ? await $.ui.open({ id: PANE, title: TITLE }) : undefined
   if (opened?.isPlaced) return
 
   const newest = added.at(-1)
@@ -326,8 +329,10 @@ export const register: Register = (on, options) => {
     return { text: 'Mermaid pane: p/n page, c copy, o open to zoom and pan, s save, esc back to the prompt.' }
   })
 
-  // Every block of the model's reply passes here once, as it is kept.
-  on('session.append', async ($, e, next) => {
+  // Every block of the model's reply passes here once, as it is kept. Only replies:
+  // the other rows are none of this mod's business, and an organization's policy
+  // plugin may pass some of them on past user plugins.
+  on('session.append', { door: 'response' }, async ($, e, next) => {
     const kept = await next(e)
     if (e.origin.kind === 'model' && e.agentId === undefined) {
       const sources = e.message.content.flatMap(block =>
@@ -351,7 +356,6 @@ export const register: Register = (on, options) => {
   }).catch(($, e, next) => next(e))
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
-    screenColumns = e.viewport?.columns ?? screenColumns
     const isCollapsed =
       settings.collapseInTranscript && e.surface === 'terminal' && mermaidBlocks(e.props.text).length > 0
     if (!isCollapsed) return next(e)
@@ -406,7 +410,7 @@ export const register: Register = (on, options) => {
       lastGeometry = geometry
       // The alt shows where the terminal draws no pictures: the source is the next best thing.
       body =
-        bytes === undefined || bytes.base64.length > MAX_BASE64 ? (
+        bytes === undefined || bytes.base64.length > MAX_BASE64 || Math.max(diagram.width, diagram.height) > MAX_SIDE ? (
           <Text dimColor>Too large to draw here: press o to open it.</Text>
         ) : (
           // A new key per diagram and size: the same source at another size is drawn anew.

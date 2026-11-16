@@ -110,6 +110,16 @@ test('a prompt that asks for a diagram carries the hint', async ($, on) => {
   expect(asked.drop === undefined && asked.context?.[0]).toMatch(/top-down/)
 })
 
+test('a diagram past an Image\'s 4096 pixels is offered to open, not drawn', async ($, on) => {
+  const tall: Diagram = { ...RENDERED[0]!, width: 644, height: 4742 }
+  seed(on, [tall])
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: /Too large to draw here/ })).toBeDefined()
+  expect(await ui.find({ type: 'Image' })).toBeUndefined()
+  await ui.unmount()
+})
+
 test('a surface without pictures shows the source', async ($, on) => {
   seed(on, RENDERED.slice(0, 1))
 
