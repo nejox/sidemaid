@@ -31,7 +31,7 @@
     "promptHint": {
       "type": "boolean",
       "title": "Tell Claude about the pane",
-      "description": "Adds a short note to the system prompt: diagrams show in a narrow pane, so prefer top-down layouts and a title.",
+      "description": "Adds a short note to the prompt: diagrams show in a pane, so write a mermaid block, top-down, with a title.",
       "default": true
     },
     "saveDir": {

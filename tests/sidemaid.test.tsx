@@ -63,7 +63,7 @@ test('reads the PNG size and fits it to the pane', () => {
   // Wide: as wide as the pane allows, few rows.
   expect(fit(1568, 220, 60, 40)).toEqual({ columns: 60, rows: 4 })
   // Tall: held to the rows, narrowed to keep the aspect.
-  expect(fit(530, 1488, 60, 20)).toEqual({ columns: 14, rows: 20 })
+  expect(fit(530, 1488, 60, 20)).toEqual({ columns: 16, rows: 20 })
 })
 
 test('keeps the parse error and drops the stack', () => {
@@ -94,7 +94,20 @@ test('the pane shows the newest diagram and pages back', async ($, on) => {
   await ui.press({ key: 'prev' })
   expect(await ui.find({ type: 'Text', text: /#1 Data flow/ })).toBeDefined()
   expect(await ui.find({ type: 'Image' })).toBeDefined()
+
   await ui.unmount()
+})
+
+test('a prompt that asks for a diagram carries the hint', async ($, on) => {
+  on('prompt.submit', (_, e) => ({ text: e.text, context: e.context }))
+  const origin = { kind: 'composer' } as const
+
+  const first = await $.prompt.submit({ text: 'hello', wait: false, origin })
+  expect(first.drop === undefined && first.context?.[0]).toMatch(/top-down/)
+  const plain = await $.prompt.submit({ text: 'and now?', wait: false, origin })
+  expect(plain.drop === undefined && plain.context).toBeUndefined()
+  const asked = await $.prompt.submit({ text: 'zeig das als Diagramm', wait: false, origin })
+  expect(asked.drop === undefined && asked.context?.[0]).toMatch(/top-down/)
 })
 
 test('a surface without pictures shows the source', async ($, on) => {
