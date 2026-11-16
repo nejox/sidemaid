@@ -29,6 +29,16 @@ The mod also attaches a short note to your first prompt, and to any prompt that 
   PUPPETEER_SKIP_DOWNLOAD=true npm i -g @mermaid-js/mermaid-cli
   ```
 
+### Tested on
+
+| Platform | Status |
+| --- | --- |
+| macOS, iTerm2 3.7, Claude Code 2.1.311 | Tested in live sessions: capture, render, pane, images, paging. Copy, open and save not yet |
+| kitty, Ghostty (macOS or Linux) | Untested; the mod API draws images there |
+| Linux in general | Untested; `o` uses `xdg-open` |
+| Windows | Not supported yet: opening and saving use macOS and Linux commands |
+| Desktop app, VS Code, mobile | The pane shows the diagram's source, not the image |
+
 ## Install
 
 At the prompt of a Claude Code session in a terminal:
@@ -65,7 +75,7 @@ The pane keeps the last 30 diagrams of the session. A render takes about 2 secon
 
 ## Configuration
 
-Set these in `/config`, or under `pluginConfigs` in `~/.claude/settings.json`:
+None is needed: every option has a default. The installer's note that options are not yet set can be ignored. To change one, use `/config`, or `pluginConfigs` in `~/.claude/settings.json`:
 
 | Option | Default | Meaning |
 | --- | --- | --- |
