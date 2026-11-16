@@ -21,7 +21,7 @@
 3. In the transcript, the block is drawn as a one-line pointer to the pane. Claude's context and the saved conversation keep the full source.
 4. Ask for changes and the new version becomes the next entry. Page back to compare.
 
-The mod also adds a short note to the system prompt (under 100 tokens): diagrams show in a narrow pane, so Claude prefers `flowchart TD` over `LR`, stays under about 25 nodes, and sets a title with `%% title: …`. You can turn it off.
+The mod also attaches a short note to your first prompt, and to any prompt that asks for a diagram (under 100 tokens): diagrams show in a pane, so Claude writes a mermaid block rather than an artifact or HTML page, lays it out top-down, stays under about 25 nodes, and sets a title with `%% title: …`. The note rides on the prompt rather than the system prompt, because an organization's policy plugin may skip a user plugin's system-prompt hook. You can turn it off.
 
 ## Requirements
 
@@ -65,9 +65,11 @@ In the desktop app, where `/plugin` does not run: click + next to the prompt box
 | `/mermaid clear` | Empty the diagram list |
 | `p` / `n` | Previous / next diagram (pane focused) |
 | `c` | Copy the mermaid source |
-| `o` | Open the PNG at full size (`open` on macOS, `xdg-open` on Linux) |
+| `o` | Open the PNG in your image viewer, to zoom and pan with trackpad or mouse (`open` on macOS, `xdg-open` on Linux) |
 | `s` | Save `<title>.mmd` and `<title>.png` to `docs/diagrams/` in the working directory |
 | `esc` | Back to the prompt |
+
+The pane's buttons can be clicked with the mouse too.
 
 The pane keeps the last 30 diagrams of the session. A render takes about 2 seconds (4 for the first one, while Chrome starts). Renders are cached in `~/.cache/sidemaid/` by theme and source.
 
@@ -89,7 +91,8 @@ Set these in `/config`, or under `pluginConfigs` in `~/.claude/settings.json`:
 
 - Only blocks from the main conversation are captured, not from subagents.
 - While a reply streams, its mermaid block shows as code until the block is complete.
-- A pane opens on its own only in a terminal of 144 columns or more. Below that, `/mermaid` opens it.
+- The terminal's width decides where the pane goes. From 144 columns it opens by itself beside the transcript. From 110 it docks there when you run `/mermaid`. Below 110 it opens above the prompt with a third of the screen's height, which makes tall diagrams small; a toast says when a diagram is ready.
+- The pane shows the whole diagram, at most at its rendered size. There is no zoom inside the pane, because iTerm2 draws a picture whole or not at all: `o` opens it where you can zoom.
 - The desktop app, VS Code and mobile show the source in the pane, not the image.
 
 ## Development
