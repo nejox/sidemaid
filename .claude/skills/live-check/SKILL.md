@@ -23,7 +23,7 @@ LIVE_CHECK_CWD=<a folder Claude Code trusts> .claude/skills/live-check/live-chec
 ```
 
 - `tmux`: screen text (`*.txt`). tmux shows no pictures, so an `Image` draws its alt (the mermaid source) in its place. Good for layout: docked or inline, what opened, what the transcript shows.
-- `iterm` (macOS): a new iTerm2 window at that size, screenshots (`*.png`) plus its text. Shows the real image. `screencapture` needs the Screen Recording permission for the app that runs it.
+- `iterm` (macOS): a new iTerm2 window at that size, screenshots (`*.png`) plus its text. Shows the real image. The screenshots are taken by `screencapture -l <window>` run from Terminal.app, so Terminal.app needs the Screen Recording permission (iTerm2 does not, and covered windows are captured whole).
 
 Each run uses a fresh render cache, a `haiku` reply (`LIVE_CHECK_MODEL`), and deletes its own session transcript. Output: `$LIVE_CHECK_OUT` (default `$TMPDIR/sidemaid-live-check/<mode>-<cols>x<rows>/`), with `debug.log` and `hook-problems.txt` (sidemaid lines in the debug log that say failed, skipped or refused).
 
