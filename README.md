@@ -1,6 +1,6 @@
-# mermaid-pane
+# sidemaid
 
-A Claude Code mod that renders the Mermaid diagrams Claude writes as real images in a side pane of your terminal. The diagram stays in view while you keep talking about it.
+*Sidebar + mermaid.* A Claude Code mod that renders the Mermaid diagrams Claude writes as real images in a side pane of your terminal. The diagram stays in view while you keep talking about it.
 
 ```
 ┌ transcript ─────────────────────────────┐┌ Mermaid ───────────────────────┐
@@ -44,7 +44,7 @@ The mod also adds a short note to the system prompt (under 100 tokens): diagrams
 At the prompt of a Claude Code session in a terminal:
 
 ```
-/plugin install mermaid-pane --marketplace nejox/mermaid-pane
+/plugin install sidemaid --marketplace nejox/sidemaid
 ```
 
 Answer `y` to add the marketplace, then pick a scope (user installs it for every session).
@@ -52,10 +52,10 @@ Answer `y` to add the marketplace, then pick a scope (user installs it for every
 From a shell:
 
 ```sh
-claude plugin install mermaid-pane --marketplace nejox/mermaid-pane
+claude plugin install sidemaid --marketplace nejox/sidemaid
 ```
 
-In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `nejox/mermaid-pane`, then Add plugin.
+In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `nejox/sidemaid`, then Add plugin.
 
 ## Use
 
@@ -69,7 +69,7 @@ In the desktop app, where `/plugin` does not run: click + next to the prompt box
 | `s` | Save `<title>.mmd` and `<title>.png` to `docs/diagrams/` in the working directory |
 | `esc` | Back to the prompt |
 
-The pane keeps the last 30 diagrams of the session. A render takes about 2 seconds (4 for the first one, while Chrome starts). Renders are cached in `~/.cache/mermaid-pane/` by theme and source.
+The pane keeps the last 30 diagrams of the session. A render takes about 2 seconds (4 for the first one, while Chrome starts). Renders are cached in `~/.cache/sidemaid/` by theme and source.
 
 ## Configuration
 
