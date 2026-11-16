@@ -11,10 +11,10 @@ const MAX_BASE64 = 2_796_000
 
 // Change the tag when a diagram's fields change: it declines what an earlier
 // version stored, which outlives a reload.
-const diagrams = atom({ plugin: 'mermaid-pane', key: 'diagrams' } as const, [], {
+const diagrams = atom({ plugin: 'sidemaid', key: 'diagrams' } as const, [], {
   shape: 'diagrams-1',
 })
-const selected = atom({ plugin: 'mermaid-pane', key: 'selected' } as const, null)
+const selected = atom({ plugin: 'sidemaid', key: 'selected' } as const, null)
 
 // A fenced mermaid block, ``` or ~~~. Adapted from ccmermaid (MIT),
 // https://github.com/weichieh0204/ccmermaid
@@ -153,7 +153,7 @@ function messageOf(err: unknown): string {
 
 async function rendererOf($: EngineInterface, settings: Settings): Promise<Renderer> {
   const home = (await $.env.get('HOME')) ?? '/tmp'
-  const cacheDir = `${(await $.env.get('XDG_CACHE_HOME')) ?? `${home}/.cache`}/mermaid-pane`
+  const cacheDir = `${(await $.env.get('XDG_CACHE_HOME')) ?? `${home}/.cache`}/sidemaid`
   const mmdc = settings.mmdcPath
   const flags = ['-t', settings.theme, '-b', 'transparent', '-s', '2', '-q']
 
@@ -323,7 +323,7 @@ export const register: Register = (on, options) => {
     if (!settings.promptHint || !e.surfaces.includes('terminal')) return composed
 
     return {
-      sections: [...composed.sections, { id: 'mermaid-pane:hint', text: HINT, scope: 'session' }],
+      sections: [...composed.sections, { id: 'sidemaid:hint', text: HINT, scope: 'session' }],
     }
   })
 

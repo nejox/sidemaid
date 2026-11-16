@@ -1,10 +1,10 @@
 {
-  "name": "mermaid-pane",
+  "name": "sidemaid",
   "version": "0.1.0",
   "description": "Mermaid diagrams from the conversation, rendered as images in a terminal side pane",
   "author": { "name": "nejox", "url": "https://github.com/nejox" },
-  "homepage": "https://github.com/nejox/mermaid-pane",
-  "repository": "https://github.com/nejox/mermaid-pane",
+  "homepage": "https://github.com/nejox/sidemaid",
+  "repository": "https://github.com/nejox/sidemaid",
   "license": "MIT",
   "keywords": ["mermaid", "diagram", "pane", "terminal", "mod"],
   "types": "./types/index.d.ts",
