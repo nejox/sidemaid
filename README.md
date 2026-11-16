@@ -33,7 +33,7 @@ The mod also attaches a short note to your first prompt, and to any prompt that 
 
 | Platform | Status |
 | --- | --- |
-| macOS, iTerm2 3.7, Claude Code 2.1.311 | Tested in live sessions: capture, render, pane, images, paging. Copy, open and save not yet |
+| macOS, iTerm2 3.7, Claude Code 2.1.311 | Tested in live sessions: capture, render, pane, images, paging, copy, open, save |
 | kitty, Ghostty (macOS or Linux) | Untested; the mod API draws images there |
 | Linux in general | Untested; `o` uses `xdg-open` |
 | Windows | Not supported yet: opening and saving use macOS and Linux commands |

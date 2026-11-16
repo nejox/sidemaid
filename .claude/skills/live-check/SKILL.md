@@ -13,6 +13,8 @@ description: Run sidemaid in a real Claude Code session at a given terminal size
 | `2-asked` | After `/mermaid` |
 | `3-prev` | After `p` in the pane: the first diagram |
 
+On macOS it then presses the pane's keys on that diagram and writes `checks.txt`: `copy` (the clipboard holds its source; the clipboard's text is put back afterwards, a picture on it is not), `save` (`.mmd` and `.png` in the run's `saved/`, set through `--settings`), `open` (Preview shows the PNG; its window is closed again).
+
 ## Run
 
 From the repository root:

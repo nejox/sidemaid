@@ -25,12 +25,18 @@ RUN="$OUT/$NAME"
 
 rm -rf "$RUN" && mkdir -p "$RUN/cache"
 
+# The pane's save key writes into the run's folder, not the session's working directory.
+cat >"$RUN/settings.json" <<EOF
+{ "pluginConfigs": { "sidemaid": { "options": { "saveDir": "$RUN/saved" } } } }
+EOF
+
 # A fresh cache: every run renders with mmdc instead of reusing a PNG.
 cat >"$RUN/run.sh" <<EOF
 cd $(printf %q "$CWD")
 export XDG_CACHE_HOME=$(printf %q "$RUN/cache")
 exec claude --plugin-dir $(printf %q "$PLUGIN") --model $(printf %q "$MODEL") \\
   --session-id $ID -n live-check --debug-file $(printf %q "$RUN/debug.log") \\
+  --settings $(printf %q "$RUN/settings.json") \\
   "\$(cat $(printf %q "$HERE/prompt.md"))"
 EOF
 
@@ -118,6 +124,45 @@ snap 2-asked
 press p
 sleep 2
 snap 3-prev
+
+check() { # <name> <command...>: one line in checks.txt
+  if "${@:2}"; then echo "$1: ok"; else echo "$1: FAILED"; fi | tee -a "$RUN/checks.txt"
+}
+copied_title() { [ "$(pbpaste | head -1)" = "%% title: Tall flow" ]; }
+saved() { [ -s "$RUN/saved/tall-flow.mmd" ] && [ -s "$RUN/saved/tall-flow.png" ]; }
+preview_shows_png() {
+  local names
+  names=$(osascript -e 'tell application "Preview" to get name of every window' 2>/dev/null)
+  for png in "$RUN"/cache/sidemaid/*.png; do
+    case "$names" in *"$(basename "$png")"*) return 0 ;; esac
+  done
+  return 1
+}
+
+# The pane's keys on the first diagram (macOS): c copies, s saves, o opens. The
+# clipboard's text is put back byte for byte (a picture on it is not), and Preview
+# is left as it was found.
+if [ "$(uname)" = Darwin ]; then
+  pbpaste >"$RUN/clipboard" 2>/dev/null || true
+  press c
+  sleep 1
+  check copy copied_title
+  pbcopy <"$RUN/clipboard"
+  rm -f "$RUN/clipboard"
+
+  press s
+  sleep 2
+  check save saved
+
+  pgrep -x Preview >/dev/null && preview_ran=yes || preview_ran=no
+  press o
+  sleep 3
+  check open preview_shows_png
+  for png in "$RUN"/cache/sidemaid/*.png; do
+    osascript -e "tell application \"Preview\" to close (every window whose name is \"$(basename "$png")\")" >/dev/null 2>&1 || true
+  done
+  [ "$preview_ran" = yes ] || osascript -e 'tell application "Preview" to quit' >/dev/null 2>&1 || true
+fi
 
 type_line "/exit"
 sleep 1
