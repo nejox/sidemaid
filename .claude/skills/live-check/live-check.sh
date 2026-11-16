@@ -59,16 +59,21 @@ EOF
   screen() { in_session "get contents"; }
   type_line() { in_session "write text \"$1\""; }
   press() { in_session "write text \"$1\" newline no"; }
+  # screencapture runs from Terminal.app, so only Terminal.app needs the Screen
+  # Recording permission; -l captures the iTerm2 window even where covered.
+  pgrep -x Terminal >/dev/null && TERMINAL_RAN=yes || TERMINAL_RAN=no
   snap() {
-    osascript -e "tell application \"iTerm2\" to select (window id $WINDOW)" >/dev/null
-    sleep 0.5
-    local b
-    b=$(osascript -e "tell application \"iTerm2\" to get bounds of (window id $WINDOW)" | tr -d ' ')
-    IFS=, read -r x1 y1 x2 y2 <<<"$b"
-    screencapture -x -R "$x1,$y1,$((x2 - x1)),$((y2 - y1))" "$RUN/$1.png"
+    local tab
+    tab=$(osascript -e "tell application \"Terminal\" to do script \"screencapture -x -o -l $WINDOW '$RUN/$1.png'; exit\"")
+    for _ in $(seq 1 20); do [ -s "$RUN/$1.png" ] && break; sleep 0.5; done
+    osascript -e "tell application \"Terminal\" to close (window id ${tab##*window id })" >/dev/null 2>&1 || true
+    [ -s "$RUN/$1.png" ] || echo "no screenshot for $1: does Terminal.app have the Screen Recording permission?" >&2
     screen >"$RUN/$1.txt"
   }
-  stop() { osascript -e "tell application \"iTerm2\" to close (window id $WINDOW)" >/dev/null 2>&1 || true; }
+  stop() {
+    osascript -e "tell application \"iTerm2\" to close (window id $WINDOW)" >/dev/null 2>&1 || true
+    [ "$TERMINAL_RAN" = yes ] || osascript -e 'tell application "Terminal" to quit' >/dev/null 2>&1 || true
+  }
 else
   echo "mode is tmux or iterm" >&2
   exit 2
