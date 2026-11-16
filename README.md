@@ -1,5 +1,7 @@
 # sidemaid
 
+[![CI](https://github.com/nejox/sidemaid/actions/workflows/ci.yml/badge.svg)](https://github.com/nejox/sidemaid/actions/workflows/ci.yml)
+
 *Sidebar + mermaid.* A Claude Code mod that renders the Mermaid diagrams Claude writes as real images in a side pane of your terminal. The diagram stays in view while you keep talking about it.
 
 ![The same prompts in Claude Code without and with sidemaid: a wall of mermaid source on the left, the rendered diagram in a side pane on the right](docs/demo.gif)
