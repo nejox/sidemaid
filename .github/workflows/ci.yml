@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  plugin:
+    name: validate and test (Claude Code ${{ matrix.claude-code }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The version the mod is tested on, and the newest: the mod API is early
+        # access and moves between releases.
+        claude-code: ['2.1.311', 'latest']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm install --global @anthropic-ai/claude-code@${{ matrix.claude-code }}
+      - run: claude --version
+      - run: claude plugin validate .
+      - run: claude plugin test .
