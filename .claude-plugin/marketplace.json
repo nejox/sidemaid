@@ -1,0 +1,6 @@
+{
+  "name": "mermaid-pane",
+  "description": "mermaid-pane: Mermaid diagrams from the conversation, rendered as images in a terminal side pane",
+  "owner": { "name": "nejox" },
+  "plugins": [{ "name": "mermaid-pane", "source": "./" }]
+}
