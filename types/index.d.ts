@@ -13,7 +13,7 @@ export type Diagram = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'sidemaid': {
+    sidemaid: {
       diagrams: Shaped<Diagram[]>
       // The diagram the person paged to; null follows the newest.
       selected: number | null

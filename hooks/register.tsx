@@ -23,10 +23,14 @@ const FENCE = /^[ \t]*(`{3,}|~{3,})[ \t]*mermaid[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*
 const MISSING_MMDC = 'mmdc not found. Install it with: npm i -g @mermaid-js/mermaid-cli'
 
 const HINT = [
-  'Mermaid code blocks you write are rendered as images in a narrow side pane of the',
-  "user's terminal. When you draw one, prefer `flowchart TD` over `LR`, keep it under",
-  'about 25 nodes, and give it a title on its first line as `%% title: <title>`.',
+  "Mermaid code blocks you write are shown as images in a pane of the user's terminal:",
+  'draw a diagram as a ```mermaid block in your reply, not as an artifact or HTML page.',
+  'Lay them out top-down (`flowchart TD`; no `direction LR` in class or ER diagrams),',
+  'keep one under about 25 nodes, and title it on its first line as `%% title: <title>`.',
 ].join(' ')
+
+// A prompt that asks for a picture gets the hint again: it may be compacted away.
+const ASKS_FOR_DIAGRAM = /mermaid|diagram|chart|flow/i
 
 const CHROMES = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -115,9 +119,13 @@ export function errorOf(stderr: string): string {
   return kept.slice(0, 6).join('\n') || 'mmdc failed without a message'
 }
 
-// Terminal cells are about twice as tall as wide.
-const CELL_ASPECT = 0.5
+// A terminal cell is about 7 by 16 points: iTerm2's default font draws 7.25 by 17.
+const CELL_ASPECT = 0.45
+// mmdc renders at twice the scale: the PNG's width over 14 is its size in cells.
+const PX_PER_CELL = 14
 
+// The whole diagram in the pane, never past its rendered size: iTerm2 draws a
+// picture whole or not at all, so one taller than the pane would not show.
 export function fit(
   width: number,
   height: number,
@@ -125,16 +133,15 @@ export function fit(
   rows: number,
 ): { columns: number; rows: number } {
   const ratio = (height / width) * CELL_ASPECT
-  // mmdc renders at twice the scale; about 7 px per cell keeps a small diagram small.
-  const natural = Math.ceil(width / 2 / 7)
+  const natural = Math.ceil(width / PX_PER_CELL)
   let cols = Math.max(1, Math.min(columns, natural, 255))
   let tall = Math.max(1, Math.round(cols * ratio))
   if (tall > rows) {
-    tall = Math.max(1, rows)
+    tall = Math.max(1, Math.min(rows, 255))
     cols = Math.max(1, Math.min(cols, Math.round(tall / ratio)))
   }
 
-  return { columns: cols, rows: Math.min(tall, 255) }
+  return { columns: cols, rows: tall }
 }
 
 function slugOf(title: string): string {
@@ -176,6 +183,10 @@ async function rendererOf($: EngineInterface, settings: Settings): Promise<Rende
 
 // One per load: a reload runs register again in a fresh environment.
 let renderer: Promise<Renderer> | undefined
+// The terminal's columns, as the last drawing measured them.
+let screenColumns = 80
+let isHinted = false
+let lastGeometry = ''
 
 function rendererFor($: EngineInterface, settings: Settings): Promise<Renderer> {
   renderer ??= rendererOf($, settings).catch(err => {
@@ -239,8 +250,19 @@ async function capture($: EngineInterface, settings: Settings, sources: readonly
   if (added.length === 0) return
 
   await update($, selected, () => null)
-  if (settings.autoOpen) void $.ui.open({ id: PANE, title: TITLE })
+  void announce($, settings, added)
   for (const diagram of added) await renderOne($, settings, diagram)
+}
+
+// The pane opens by itself only where the terminal docks it wide enough; else say where it is.
+async function announce($: EngineInterface, settings: Settings, added: readonly Diagram[]) {
+  // Below 110 columns no pane docks: one opened unasked would only wait.
+  const canDock = screenColumns >= 110
+  const opened = settings.autoOpen && canDock ? await $.ui.open({ id: PANE, title: TITLE }) : undefined
+  if (opened?.isPlaced) return
+
+  const newest = added.at(-1)
+  if (newest) $.ui.toast(`Mermaid #${newest.id} ${newest.title} is ready: /mermaid shows it`)
 }
 
 async function page($: EngineInterface, step: number) {
@@ -301,7 +323,7 @@ export const register: Register = (on, options) => {
     const opened = await $.ui.open({ id: PANE, title: TITLE, focus: true })
     if (!opened.isPlaced) return { text: `The Mermaid pane could not open: ${opened.reason}` }
 
-    return { text: 'Mermaid pane: p/n page, c copy, o open, s save, esc back to the prompt.' }
+    return { text: 'Mermaid pane: p/n page, c copy, o open to zoom and pan, s save, esc back to the prompt.' }
   })
 
   // Every block of the model's reply passes here once, as it is kept.
@@ -318,16 +340,18 @@ export const register: Register = (on, options) => {
     return kept
   }).catch(($, e, next) => next(e))
 
-  on('prompt.compose', async ($, e, next) => {
-    const composed = await next(e)
-    if (!settings.promptHint || !e.surfaces.includes('terminal')) return composed
+  // Context on the prompt, not a system prompt section: an organization's policy
+  // plugin may run first at prompt.compose and skip a user plugin's hook there.
+  on('prompt.submit', async ($, e, next) => {
+    const isWanted = !isHinted || ASKS_FOR_DIAGRAM.test(e.text)
+    if (!settings.promptHint || e.command !== undefined || e.isMeta || !isWanted) return next(e)
 
-    return {
-      sections: [...composed.sections, { id: 'sidemaid:hint', text: HINT, scope: 'session' }],
-    }
-  })
+    isHinted = true
+    return next({ ...e, context: [...(e.context ?? []), HINT] })
+  }).catch(($, e, next) => next(e))
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
+    screenColumns = e.viewport?.columns ?? screenColumns
     const isCollapsed =
       settings.collapseInTranscript && e.surface === 'terminal' && mermaidBlocks(e.props.text).length > 0
     if (!isCollapsed) return next(e)
@@ -372,12 +396,26 @@ export const register: Register = (on, options) => {
       // A read past 4 MiB rejects; an Image past 2 MiB is refused.
       const bytes = await $.fs.read(diagram.png, { as: 'bytes' }).catch(() => undefined)
       const size = fit(diagram.width, diagram.height, columns, room)
+      const geometry = [
+        `pane ${e.props.placement} ${columns}x${e.props.scroll.bodyRows}`,
+        `screen ${e.viewport?.columns ?? '?'}x${e.viewport?.rows ?? '?'}`,
+        `png ${diagram.width}x${diagram.height}`,
+        `image ${size.columns}x${size.rows}`,
+      ].join(', ')
+      if (geometry !== lastGeometry) $.ui.log(`sidemaid: ${geometry}`, { to: 'debug' })
+      lastGeometry = geometry
       // The alt shows where the terminal draws no pictures: the source is the next best thing.
       body =
         bytes === undefined || bytes.base64.length > MAX_BASE64 ? (
           <Text dimColor>Too large to draw here: press o to open it.</Text>
         ) : (
-          <Image key="diagram" source={{ png: bytes.base64 }} alt={diagram.source} {...size} />
+          // A new key per diagram and size: the same source at another size is drawn anew.
+          <Image
+            key={`diagram-${diagram.id}-${size.columns}x${size.rows}`}
+            source={{ png: bytes.base64 }}
+            alt={diagram.source}
+            {...size}
+          />
         )
     } else {
       body = <Text>{diagram.source}</Text>
