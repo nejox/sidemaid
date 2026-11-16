@@ -12,7 +12,7 @@ const SEQUENCE = 'sequenceDiagram\n  A->>B: hi'
 const REPLY = `Here it is:\n\n\`\`\`mermaid\n${FLOW}\n\`\`\`\n\nDone.`
 
 const PANE = {
-  plugin: 'mermaid-pane',
+  plugin: 'sidemaid',
   component: 'Pane',
   requestId: 'mermaid',
   props: {
@@ -112,7 +112,7 @@ test('the transcript draws a pointer in place of the block', async ($, on) => {
   })
 
   const ui = await $.ui.mount({
-    plugin: 'mermaid-pane',
+    plugin: 'sidemaid',
     component: 'AssistantMessage',
     requestId: 'msg-1',
     surface: 'terminal',
