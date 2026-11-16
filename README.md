@@ -2,17 +2,7 @@
 
 *Sidebar + mermaid.* A Claude Code mod that renders the Mermaid diagrams Claude writes as real images in a side pane of your terminal. The diagram stays in view while you keep talking about it.
 
-```
-┌ transcript ─────────────────────────────┐┌ Mermaid ───────────────────────┐
-│ > draw the training pipeline            ││ #3 Training pipeline (3/3)     │
-│                                         ││                                │
-│ ● Here is the flow:                     ││   [ rendered diagram image ]   │
-│   ◧ Mermaid #3 Training pipeline,       ││                                │
-│     in the pane (/mermaid)              ││                                │
-│                                         ││ p: prev  n: next  c: copy      │
-│ > make the feature store its own node   ││ o: open  s: save               │
-└─────────────────────────────────────────┘└────────────────────────────────┘
-```
+![The same prompts in Claude Code without and with sidemaid: a wall of mermaid source on the left, the rendered diagram in a side pane on the right](docs/demo.gif)
 
 ## How it works
 
@@ -102,6 +92,11 @@ claude plugin validate .
 claude plugin test .
 claude --plugin-dir .
 ```
+
+Two project skills check the mod in real sessions on macOS with iTerm2:
+
+- `.claude/skills/live-check/`: runs the mod at a given terminal size and keeps snapshots (screen text through tmux, or screenshots of an iTerm2 window).
+- `.claude/skills/demo-gif/`: records `docs/demo.gif` from `storyboard.yml`, without and with sidemaid side by side.
 
 ## Credits
 

@@ -1,0 +1,28 @@
+# The README's demo: the same prompts in two terminals, without and with sidemaid.
+# demo.py types each scene's prompt into both, waits for the replies (and, with
+# sidemaid, the renders), and keeps a frame of each side before and after Enter.
+
+# Columns and rows of each terminal. From 144 columns the pane opens by itself.
+size: [144, 46]
+model: haiku
+# A folder Claude Code trusts; its path shows in the session header.
+cwd: ~/repos
+# Pixels of iTerm2's window chrome (title bar, toolbars) to cut, at the Retina scale.
+crop: { top: 190, bottom: 8 }
+# The GIF's width in pixels.
+width: 1600
+
+sides:
+  - { label: Claude Code, plugin: false }
+  - { label: with sidemaid, plugin: true }
+
+scenes:
+  - prompt: >-
+      Draw a typical ML training pipeline as a mermaid flowchart: raw sales,
+      feature pipeline, feature store, training, evaluation that loops back on
+      failure, model registry, batch forecast.
+    typed: 1.5   # seconds the typed prompt shows
+    reply: 4.5   # seconds the answer shows
+  - prompt: Add a data validation step between the feature pipeline and the feature store.
+    typed: 1.5
+    reply: 5
